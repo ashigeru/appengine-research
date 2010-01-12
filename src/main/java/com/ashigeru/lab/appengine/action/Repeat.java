@@ -25,20 +25,22 @@ public abstract class Repeat extends Action {
 
     @Override
     protected void perform() throws Exception {
-        long[] elapsed = new long[100];
-        before();
-        for (int i = 0; i < 100; i++) {
+        int count = before();
+        if (count <= 5) {
+            count = 100;
+        }
+        long[] elapsed = new long[count];
+        for (int i = 0; i < count; i++) {
             elapsed[i] = -System.currentTimeMillis();
             each(i);
             elapsed[i] += System.currentTimeMillis();
         }
         after();
         Arrays.sort(elapsed);
-        output.println(" 1:" + elapsed[ 1] + "ms");
-        output.println("25:" + elapsed[25] + "ms");
-        output.println("50:" + elapsed[50] + "ms");
-        output.println("75:" + elapsed[75] + "ms");
-        output.println("99:" + elapsed[99] + "ms");
+        output.println("cnt: " + count + "runs");
+        output.println("max: " + elapsed[1] + "ms");
+        output.println("mid: " + elapsed[count / 2] + "ms");
+        output.println("min: " + elapsed[count - 2] + "ms");
     }
 
     /**
