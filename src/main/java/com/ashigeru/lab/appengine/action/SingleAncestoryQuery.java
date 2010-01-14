@@ -27,7 +27,7 @@ import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
 
 /**
- * 単一のエンティティに対するクエリ。
+ * Fetches an empty entity using ancestory queries.
  * @author ashigeru
  */
 public class SingleAncestoryQuery extends Repeat {
@@ -41,9 +41,16 @@ public class SingleAncestoryQuery extends Repeat {
     @Override
     protected int before() {
         ds = DatastoreServiceFactory.getDatastoreService();
-        key = KeyFactory.createKey("Single", "SINGLE");
-        query = new Query(key);
+        key = KeyFactory.createKey("Ancestor", "SINGLE");
+
+        // :key
+        // :key/Child(SINGLE)
         ds.put(new Entity(key));
+        ds.put(new Entity(KeyFactory.createKey(key, "Child", "SINGLE")));
+
+        // SELECT * FROM entities e WHERE ANCESTOR IS :key
+        // SELECT * FROM entities e WHERE e.key.startsWith(:key)
+        query = new Query(key);
         return 100;
     }
 
@@ -52,7 +59,14 @@ public class SingleAncestoryQuery extends Repeat {
         PreparedQuery pq = ds.prepare(query);
         Iterator<Entity> iter = pq.asIterator(FetchOptions.Builder.withLimit(1));
         if (iter.hasNext()) {
-            iter.next();
+            // assume ORDER BY __key__ ASC
+            if (iter.next().getKey().equals(key) == false) {
+                throw new AssertionError();
+            }
+            // limit(1)
+            if (iter.hasNext()) {
+                throw new AssertionError();
+            }
         }
         else {
             throw new AssertionError();
